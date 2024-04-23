@@ -63,3 +63,7 @@ The example uses the Rosenbrock function for optimization. This is a classic opt
 
 - [Rosenbrock function](https://en.wikipedia.org/wiki/Rosenbrock_function)
 - [Genetic Algorithm](https://en.wikipedia.org/wiki/Genetic_algorithm)
+
+### Example of generations converging
+
+![Example GIF](images/convergence.gif)

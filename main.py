@@ -14,11 +14,13 @@ def main():
     ga = GeneticAlgorithm(rosenbrock, BOUNDS, POP_SIZE, MAX_ITER, MUTATION_RATE, MUTATION_SIZE, RECOMBINATION_RATE, DIM)
     start = ga.generate_population()
 
-    # best, pop, iters = ga.evolve(start, rosenbrock, 1000)
-    # print(f'Best: {best}')
-    # print(f'Best value: {rosenbrock(best)}')
+    best, pop, iters = ga.evolve(start)
+    print(f'Best: {best}')
+    print(f'Best value: {rosenbrock(best)}')
 
-    ga.simulate(15)
+
+    # Simulate 15 executions
+    # ga.simulate(15)
 
 if __name__ == '__main__':
     main()
