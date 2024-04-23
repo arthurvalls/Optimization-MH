@@ -23,9 +23,8 @@ class GeneticAlgorithm:
 
 
     def generate_population(self):
-        p = [np.array([np.random.uniform(self.bounds[0], self.bounds[1]) for _ in range(self.dim)]) 
+        return [np.array([np.random.uniform(self.bounds[0], self.bounds[1]) for _ in range(self.dim)]) 
              for _ in range(self.pop_size)]
-        return p
 
     def tournament_selection(self, population, tournament_size=2):
         chosen_ones = []
