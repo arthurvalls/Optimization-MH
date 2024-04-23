@@ -170,7 +170,7 @@ class GeneticAlgorithm:
         ani = FuncAnimation(fig, update_plot, frames=len(points), interval=250)
 
         # Save the GIF
-        ani.save(gif_filename, writer='imagemagick')
+        ani.save(gif_filename, writer='pillow')
 
         plt.close()
 
