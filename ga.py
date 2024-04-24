@@ -27,19 +27,10 @@ class GeneticAlgorithm:
              for _ in range(self.pop_size)]
 
     def tournament_selection(self, population, tournament_size=2):
-        chosen_ones = []
-
-        while len(population) >= tournament_size:
-            current_round_indices = random.sample(range(len(population)), k=tournament_size)
-            current_round = [population[i] for i in current_round_indices]
-
-            winner = min(current_round, key=lambda x: self.function(x))
-            chosen_ones.append(winner)
-
-            selected_indices = set(current_round_indices)
-            population = [pop for i, pop in enumerate(population) if i not in selected_indices]
-
-        return chosen_ones
+        np.random.shuffle(population) # shuffling one more time improved precision
+                                      # with almost no computational overhead        
+        return np.array([min((population[i], population[i+1]), key=lambda x: self.function(x))
+                         for i in range(0, len(population), 2)])
 
     def crossover(self, *parents):
         return np.mean(parents, axis=0)
@@ -47,7 +38,7 @@ class GeneticAlgorithm:
     def generate_offspring(self, population):
         if len(population) % 2 != 0:
             print("Population is not even!")
-        return [self.crossover(population[i], population[i + 1]) for i in range(0, len(population), 2)]
+        return np.array([self.crossover(population[i], population[i + 1]) for i in range(0, len(population), 2)])
 
     def mutation(self, population):
         mask = np.random.uniform(0, 1, size=population.shape[0]) < self.mutation_rate
@@ -173,6 +164,3 @@ class GeneticAlgorithm:
         ani.save(gif_filename, writer='pillow')
 
         plt.close()
-
-
-
