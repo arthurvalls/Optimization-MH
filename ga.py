@@ -29,8 +29,8 @@ class GeneticAlgorithm:
     def tournament_selection(self, population, tournament_size=2):
         np.random.shuffle(population) # shuffling one more time improved precision
                                       # with almost no computational overhead        
-        return np.array([min((population[i], population[i+1]), key=lambda x: self.function(x))
-                         for i in range(0, len(population), 2)])
+        return [min([population[i], population[i+1]], key=lambda x: self.function(x))
+                         for i in range(0, len(population), 2)]
 
     def crossover(self, *parents):
         return np.mean(parents, axis=0)
@@ -38,8 +38,8 @@ class GeneticAlgorithm:
     def generate_offspring(self, population):
         if len(population) % 2 != 0:
             print("Population is not even!")
-        return np.array([self.crossover(population[i], population[i + 1]) for i in range(0, len(population), 2)])
-
+        return [self.crossover(population[i], population[i + 1]) for i in range(0, len(population), 2)]
+    
     def mutation(self, population):
         mask = np.random.uniform(0, 1, size=population.shape[0]) < self.mutation_rate
         mutation_values = np.random.uniform(-self.mutation_size, self.mutation_size, 
