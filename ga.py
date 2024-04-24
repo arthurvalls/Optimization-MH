@@ -26,7 +26,7 @@ class GeneticAlgorithm:
         return [np.array([np.random.uniform(self.bounds[0], self.bounds[1]) for _ in range(self.dim)]) 
              for _ in range(self.pop_size)]
 
-    def tournament_selection(self, population, tournament_size=2):
+    def tournament_selection(self, population):
         np.random.shuffle(population) # shuffling one more time improved precision
                                       # with almost no computational overhead        
         return [min([population[i], population[i+1]], key=lambda x: self.function(x))
@@ -138,9 +138,9 @@ class GeneticAlgorithm:
             ax.clear()
             ax.contourf(X, Y, Z, levels=50, cmap='rainbow', alpha=0.5)
             best = min(generation, key=lambda x: self.function(x))
-            ax.plot(best[0], best[1], 'red', marker='X', markersize=10, alpha=1, label="Best fit")  # Removed f-string as 'i' is not used
+            ax.plot(best[0], best[1], 'green', marker='X', markersize=10, alpha=1, label="Best fit")  # Removed f-string as 'i' is not used
             ax.annotate(f"({best[0]:.5f}, {best[1]:.5f})", (best[0], best[1]), textcoords="offset points", xytext=(5,5), ha='center')
-            ax.plot(x, y, 'bo')
+            ax.plot(x, y, 'ro', alpha=0.5)
             ax.set_xlabel('X')
             ax.set_ylabel('Y')
             ax.set_title('Generation {}'.format(i + 1))
