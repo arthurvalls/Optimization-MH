@@ -5,7 +5,6 @@ import random
 from tqdm import tqdm
 import time
 
-
 class GeneticAlgorithm:
     def __init__(self, function, bounds=(-5., 5.), pop_size=100, max_iter=100, mutation_rate=0.03, mutation_size=0.1,
                  recombination_rate=0.6, dim=2, plot=True):
@@ -23,13 +22,13 @@ class GeneticAlgorithm:
 
 
     def generate_population(self):
-        return [np.array([np.random.uniform(self.bounds[0], self.bounds[1]) for _ in range(self.dim)]) 
+        return [[np.random.uniform(self.bounds[0], self.bounds[1]) for _ in range(self.dim)] 
              for _ in range(self.pop_size)]
 
     def tournament_selection(self, population):
         np.random.shuffle(population) # shuffling one more time improved precision
                                       # with almost no computational overhead        
-        return [min([population[i], population[i+1]], key=lambda x: self.function(x))
+        return [min((population[i], population[i+1]), key=lambda x: self.function(x))
                          for i in range(0, len(population), 2)]
 
     def crossover(self, *parents):
@@ -39,7 +38,7 @@ class GeneticAlgorithm:
         if len(population) % 2 != 0:
             print("Population is not even!")
         return [self.crossover(population[i], population[i + 1]) for i in range(0, len(population), 2)]
-    
+
     def mutation(self, population):
         mask = np.random.uniform(0, 1, size=population.shape[0]) < self.mutation_rate
         mutation_values = np.random.uniform(-self.mutation_size, self.mutation_size, 
@@ -58,6 +57,7 @@ class GeneticAlgorithm:
     def evolve(self, starting_pop, eps=1e-7):
         population = starting_pop
         k = 0
+        bests = []
         if self.plot:
             generations = []
         for i in tqdm(range(self.max_iter)):
@@ -82,22 +82,26 @@ class GeneticAlgorithm:
             if self.plot:
                 generations.append(population)
 
+
             # ELITISM
             population = self.elitism(population)
 
             k += 1
+            bests.append(self.function(min(population, key=lambda x: self.function(x))))            
+
+        # BEST
+        best_individual = min(population, key=lambda x: self.function(x))
+        print(f'\n{k}: {self.function(best_individual)}')
+
 
         if self.plot:
             self.generations = generations
             print(f'Plotting gif in images folder...')
             self.generate_gif()
             print(f'Potting done!')
+            self.plot_median_curve()
 
-        # BEST
-        best_individual = min(population, key=lambda x: self.function(x))
-        print(f'\n{k}: {self.function(best_individual)}')
-
-        return best_individual, population, k
+        return best_individual, population, k, bests
 
 
     def simulate(self, number_of_simulations):
@@ -108,21 +112,26 @@ class GeneticAlgorithm:
         best_val_iter = 0
         avg_values = []
 
+        all_bests = []
+
         for _ in range(number_of_simulations):
             p = self.generate_population()
             start_time = time.time()
-            best, pop, iters = self.evolve(p)
+            best, pop, iters, bests = self.evolve(p)
+            all_bests.append(bests)
             avg_times += (time.time() - start_time)
             avg_iters += iters
+            avg_values.append(self.function(best))
             if self.function(best) < best_val:
                 best_val = self.function(best)
-                avg_values.append(best_val)
                 best_val_iter = iters
 
         print(f'Best value found at {best_val_iter}: {best_val}')
         print(f'Average values found: {np.mean(avg_values)}')
         print(f'Average iters taken: {avg_iters/number_of_simulations}')
         print(f'Average time taken: {avg_times/number_of_simulations}')
+
+        return all_bests
 
     def generate_gif(self):
         def plot_generation(points, i, ax):
@@ -140,7 +149,7 @@ class GeneticAlgorithm:
             best = min(generation, key=lambda x: self.function(x))
             ax.plot(best[0], best[1], 'green', marker='X', markersize=10, alpha=1, label="Best fit")  # Removed f-string as 'i' is not used
             ax.annotate(f"({best[0]:.5f}, {best[1]:.5f})", (best[0], best[1]), textcoords="offset points", xytext=(5,5), ha='center')
-            ax.plot(x, y, 'ro', alpha=0.5)
+            ax.plot(x, y, 'ro', alpha=0.3)
             ax.set_xlabel('X')
             ax.set_ylabel('Y')
             ax.set_title('Generation {}'.format(i + 1))
@@ -164,3 +173,81 @@ class GeneticAlgorithm:
         ani.save(gif_filename, writer='pillow')
 
         plt.close()
+    
+
+    def average_curve(self, n):
+        all_bests = self.simulate(n)
+        median = np.zeros_like(all_bests[0])
+
+        s = []
+        for subarray in all_bests:
+            s.append(subarray[-1])
+
+        print(f"mean = {np.mean(s)}")
+
+        generations = range(len(all_bests))
+        print(len(all_bests[0]))
+
+        for rounds in all_bests:
+            for i in range(len(rounds)):
+                median[i] += rounds[i]
+
+        # Divide the sum by n to get the average
+        median = [x / n for x in median]
+        
+
+        from pymoo.algorithms.soo.nonconvex.ga import GA
+        from pymoo.problems import get_problem
+        from pymoo.core.callback import Callback
+        from pymoo.optimize import minimize
+
+
+        class MyCallback(Callback):
+
+            def __init__(self) -> None:
+                super().__init__()
+                self.data["best"] = []
+
+            def notify(self, algorithm):
+                self.data["best"].append(algorithm.pop.get("F").min())
+
+
+        problem = get_problem("rosenbrock", n_var=self.dim)
+
+        algorithm = GA(pop_size=100)
+
+        pymoo_bests = []
+
+        for i in tqdm(range(n)):
+          res = minimize(problem,
+                       algorithm,
+                       ('n_gen', 100),
+                       callback=MyCallback(),
+                       verbose=False)
+
+          pymoo_bests.append(res.algorithm.callback.data["best"])
+
+        media = np.zeros_like(pymoo_bests[0])
+
+        for rounds in pymoo_bests:
+            for i in range(len(rounds)):
+                media[i] += rounds[i]
+
+        # Divide the sum by n to get the average
+        media = [x / n for x in media]
+
+        # Plotting the median curve
+        plt.plot(media, label='Pymoo Median Curve', color='r')
+        # Plotting the median curve
+        plt.plot(median, label='Arthur Median Curve', linestyle='dashed')
+
+        
+
+        plt.plot(len(all_bests[0]), median[-1], marker='o', markersize=8, color='green', label=f'Best (Arthur): {median[-1]}')
+        plt.plot(len(pymoo_bests[0]), media[-1], marker='o', markersize=3, color='yellow', label=f'Best (Pymoo): {media[-1]}')
+        plt.xlabel('Generation')
+        plt.ylabel('Fitness')
+        plt.title('Median Fitness Curve')
+        plt.legend()
+        plt.show()
+
