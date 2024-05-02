@@ -7,6 +7,13 @@ from matplotlib.animation import FuncAnimation
 def rosenbrock(X, a=1, b=100):
     return sum(a * (X[i+1] - X[i]**2)**2 + b * (X[i] - 1)**2 for i in range(len(X)-1))
 
+def ackley(X):
+    x, y = X
+    term1 = -20 * np.exp(-0.2 * np.sqrt(0.5 * (x**2 + y**2)))
+    term2 = -np.exp(0.5 * (np.cos(2 * np.pi * x) + np.cos(2 * np.pi * y)))
+    return term1 + term2 + 20 + np.e
+
+
 class Particle:
     def __init__(self, genes):
         self.genes = genes
@@ -31,45 +38,6 @@ class Swarm:
                 self.best_fitness = particle.fitness
 
 
-    def generate_gif(self, function, generations):
-	    def plot_generation(points, i, ax):
-	        x = np.linspace(self.bounds[0], self.bounds[1], 100)
-	        y = np.linspace(self.bounds[0], self.bounds[1], 100)
-	        X, Y = np.meshgrid(x, y)
-	        Z = function((X, Y))
-
-	        # Plot only a subset of points for better performance
-	        subset_points = points[i]
-
-	        print(f"gen {i}")
-	        ax.clear()
-	        ax.contourf(X, Y, Z, levels=20, cmap='rainbow', alpha=0.5)
-	        ax.scatter([p.genes[0] for p in subset_points], [p.genes[1] for p in subset_points], color='red', alpha=0.3)
-	        ax.set_xlabel('X')
-	        ax.set_ylabel('Y')
-	        ax.set_title('Generation {}'.format(i + 1))
-
-	    # Example array of arrays of points
-	    points = generations[:30]
-
-	    # Initialize figure and axis
-	    fig, ax = plt.subplots(figsize=(10, 10))
-
-	    # Function to update plot for each frame
-	    def update_plot(i):
-	        plot_generation(points, i, ax)
-
-	    # Generate and save GIF
-	    gif_filename = 'images/convergence.gif'
-	    frames = min(len(points), 100)  # Limit number of frames to 100 for performance
-	    ani = FuncAnimation(fig, update_plot, frames=frames, interval=250)
-
-	    # Save the GIF
-	    ani.save(gif_filename, writer='pillow')
-
-	    plt.close()
-
-
 pop_size = 30
 bounds = [-5., 5.]
 dim = 2
@@ -88,13 +56,16 @@ def pso(swarm, cost_function, max_iter=100, plot=True):
         x = np.linspace(swarm.bounds[0], swarm.bounds[1], 50)
         y = np.linspace(swarm.bounds[0], swarm.bounds[1], 50)
         X, Y = np.meshgrid(x, y)
-        fig = plt.figure("Particle Swarm Optimization")
+        fig = plt.figure("Particle Swarm Optimization", figsize=(8, 6))
     
     for i in range(max_iter):
         if plot:
             fig.clf()
             ax = fig.add_subplot(1, 1, 1)
-            ac = ax.contourf(X, Y, cost_function(X, Y), cmap='viridis')
+            if cost_function == rosenbrock:
+            	ac = ax.contourf(X, Y, cost_function((X, Y)), levels=np.logspace(-1, 3, 10), cmap='plasma', locator=plt.LogLocator())  # Use logarithmic scale
+            else:
+            	ac = ax.contourf(X, Y, cost_function((X, Y)), cmap='plasma')
             fig.colorbar(ac)
         
         for particle in swarm.particles:
@@ -106,8 +77,8 @@ def pso(swarm, cost_function, max_iter=100, plot=True):
             particle.velocity = velocity.copy()
 
             if plot:
-                ax.scatter(particle.genes[0], particle.genes[1], marker='*', c='r')
-                ax.arrow(particle.genes[0], particle.genes[1], particle.velocity[0], particle.velocity[1], head_width=0.1, head_length=0.2, color='k')
+                ax.scatter(particle.genes[0], particle.genes[1], marker='X', c='r')
+                ax.arrow(particle.genes[0], particle.genes[1], particle.velocity[0], particle.velocity[1], head_width=0.1, head_length=0.2, color='black')
 
             particle.genes += velocity
             particle.fitness = cost_function(particle.genes)
@@ -133,7 +104,7 @@ def pso(swarm, cost_function, max_iter=100, plot=True):
         plt.show()
 
 
-pso(swarm, rosenbrock)
+pso(swarm, ackley)
 
 # print("Plotting gif...")
 # swarm.generate_gif(rosenbrock, generations)
