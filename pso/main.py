@@ -19,15 +19,15 @@ def ackley(X):
 
 def main():
     pop_size = 30
-    bounds = [-5, 5]
-    dim = 2
-    swarm = pso.Swarm(pop_size, bounds, dim, rosenbrock)
+	bounds = [-5, 5]
+	dim = 2
+	swarm = Swarm(pop_size, bounds, dim, rosenbrock)
 
-    params_loader = ParameterLoader()
+	loader = ParameterLoader(dim) # insert -1 for plot visualization params
 
-    personal_coefficient, social_coefficient, inertia_weight, max_velocity = params_loader.load_2d()
-    optimizer = pso.PSO(personal_coefficient, social_coefficient, inertia_weight, max_velocity)
-    positions, velocities = optimizer.pso(swarm)
+	personal_coefficient, social_coefficient, inertia_weight, max_velocity = loader.load_params()
+	optimizer = PSO(personal_coefficient, social_coefficient, inertia_weight, max_velocity)
+	positions, velocities = optimizer.pso(swarm)
 
     # swarm.generate_gif(positions, velocities)
 
