@@ -1,0 +1,171 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage[colorlinks=true,urlcolor=blue]{hyperref}
+\usepackage{algorithm} % Required for the algorithm environment
+\usepackage{algorithmic} % Required for the algorithmic environment
+\usepackage{amsmath}
+\usepackage{algpseudocode}
+\usepackage[utf8]{inputenc}
+\usepackage[portuguese]{babel}
+\usepackage{minted}
+
+\title{GA}
+\author{Arthur Valls}
+\date{Abril 2024}
+
+\begin{document}
+
+\maketitle
+
+\section{Google Colab}
+
+O código que implementa o GA pode ser encontrado no seguinte  \href{https://colab.research.google.com/drive/1zW4y2xiscGNOEI52n1qlYTZhmqqjBwG9?authuser=1}{link}.
+
+\section{Parâmetros e Operadores}
+
+\section{Gráficos das Gerações}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.6\textwidth]{gen0.png}
+  \caption{Geração 1}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.6\textwidth]{gen25.png}
+  \caption{Geração 25}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.6\textwidth]{gen50.png}
+  \caption{Geração 50}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.6\textwidth]{gen100.png}
+  \caption{Geração 100}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.8\textwidth]{best2d.png}
+  \caption{Melhor a cada geração (2D)}
+\end{figure}
+\newpage
+\section{Pymoo}
+
+A biblioteca pymoo oferece algoritmos de otimização de última geração para problemas de otimização de objetivo único e multiobjetivo, além de muitos outros recursos relacionados à otimização multiobjetivo, como visualização e tomada de decisão \cite{pymoo}. Ela nos fornece o seguinte código de exemplo para executarmos sua implementação do algoritmo genético:
+
+\begin{minted}{python}
+from pymoo.algorithms.soo.nonconvex.ga import GA
+from pymoo.problems import get_problem
+from pymoo.optimize import minimize
+
+problem = get_problem("rosenbrock", n_var=2)
+
+algorithm = GA(pop_size=100)
+
+res = minimize(problem, algorithm,
+               ('n_gen', 100),
+               verbose=False)
+
+print("Best solution found: \nX = %s\nF = %s" % (res.X, res.F))
+
+\end{minted}
+
+O código acima foi adaptado para utilizar uma função de retorno de chamada, a fim de recuperar os melhores indivíduos de cada geração para a realização dos testes estatísticos que veremos a seguir.
+
+\subsection{Operadores}
+
+O algoritmo genético da \textbf{Pymoo} foi executado com os seguintes operadores, que são os padrões da função:
+
+\begin{itemize}
+\item \textbf{Mutação:}
+\textbf{Polynomial Mutation (PM)}\cite{pymoo-mutation}
+
+A mutação polinomial tenta simular a distribuição da descendência das mutações de flip de bits codificados em binário com base em variáveis de decisão de valor real. Essa mutação favorece a prole mais próxima do progenitor\cite{r-pm-mutation}. 
+    
+\item \textbf{Seleção:} \textbf{Tournament Selection}\cite{pymoo-selection}
+
+Similar ao operador que utilizei, dois indivíduos são selecionados e o que tem a melhor \textbf{fitness} é escolhido para gerar a prole.
+
+\item \textbf{Cruzamento:} \textbf{Simulated Binary Crossover (SBX)}\cite{pymoo-crossover}
+
+Um operador de recombinação de parâmetros reais comumente usado na literatura de algoritmo evolutivo (EA). O operador envolve um parâmetro que dita a dispersão das soluções da prole em relação às soluções dos progenitores \cite{deb2007self}. 
+
+\end{itemize}
+
+
+\subsection{Parâmetros}
+
+A documentação do site da Pymoo (\url{pymoo.org}) oferece uma explicação detalhada sobre a aplicação de cada operador, porém não especifica muito sobre os parâmetros selecionados para cada um deles. No entanto, ao entrar no GitHub da organização (\url{https://github.com/anyoptimization/pymoo/tree/main}), podemos pesquisar por cada módulo individualmente e encontrar alguns dos parâmetros utilizados:
+
+
+\begin{itemize}
+    \item \textbf{Cruzamento (SBX)}
+
+   
+ \texttt{prob\_var}: 0.5 \\
+        Probabilidade de aplicar o SBX em cada variável.
+  
+  \texttt{prob\_exch}: 1.0 \\
+        Probabilidade de troca de informações entre indivíduos.
+  
+  \texttt{prob\_bin}: 0.5 \\
+        Probabilidade de realizar crossover binário.
+  
+  \texttt{n\_offsprings}: 2 \\
+        Número de soluções descendentes geradas por crossover.
+
+  \item \textbf{Mutação (PM)}
+  
+     \texttt{eta}: 20\\
+     Representa o parâmetro de distribuição polinomial para cada solução na população. Este parâmetro controla a extensão da mutação.
+   
+     \texttt{prob}: 0.9\\
+     Representa a probabilidade de mutação para cada solução na população.
+   
+     \texttt{at\_least\_once}: False\\
+     Parâmetro booleano opcional que determina se pelo menos uma variável deve ser mutada.
+  
+\end{itemize}
+
+Os demais parâmetros, como \textbf{limite superior e inferior de busca}, \textbf{tamanho da população}, \textbf{número de gerações} e \textbf{dimensões do problema}, foram ajustados para corresponder à minha implementação, visando realizar uma comparação justa.
+
+\section{Comparação entre os métodos}
+
+Com o objetivo de avaliar a eficiência de ambas as implementações, foram realizadas 30 execuções de cada método com 100 indivíduos e 100 gerações em três cenários dimensionais: 2, 5 e 10. 
+
+
+\subsection{2 Dimensões}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.51\textwidth]{conv2d.png}
+  \caption{Média dos melhores indivíduos por geração após 30 execuções dos algoritmos.}
+\end{figure}
+
+\begin{table}[htbp]
+    \centering
+    \begin{tabular}{|l|c|c|}
+    \hline
+    \textbf{} & \textbf{Arthur} & \textbf{Pymoo} \\
+    \hline
+    \textbf{Média} & $6.652122831398276 \times 10^{-5}$ & $9.18109627834858\times 10^{-5}$ \\
+    \hline
+    \textbf{Desvio Padrão} & 0.00016299117605273977 & 0.00010447352060452732 \\
+    \hline
+    \textbf{Mediana} & $1.7275937063029017\times 10^{-8}$ & $5.6292959826598995\times 10^{-8}$ \\
+    \hline
+    \end{tabular}
+    \caption{Estatísticas dos melhores indivíduos da última geração de cada uma das 30 execuções.}
+\end{table}
+
+\newpage
+\bibliographystyle{plain}
+\bibliography{reference} % nome do arquivo .bib (sem a extensão)
+
+\end{document}
