@@ -93,10 +93,13 @@ class Swarm:
 	        plt.close()
 
 
-# hyperparameters
-P_C = S_C = 0.2
-W = 0.7
-V_MAX = 0.15
+# hyperparameters taken from: "Good parameters for particle swarm optimization", MEH Pedersen.
+# good enough for the rosenbrock function
+
+P_C = 2.5586 # personal_coefficient previously 0.2
+S_C = 1.3358 # social_coefficient 0.2
+W = 0.3925 # inertia weight
+V_MAX = 1 # max velocity
 
 def pso(swarm, max_iter=100):
     positions = []  # Store positions of particles
@@ -108,9 +111,9 @@ def pso(swarm, max_iter=100):
         	# update velocity
             random_coefficients = np.random.uniform(size=2)
 
-            p_c = P_C * random_coefficients[0] * (particle.best_genes - particle.genes) # personal coefficient
-            s_c = S_C * random_coefficients[1] * (swarm.best_genes - particle.genes) # social coefficient
-            velocity = W * particle.velocity + p_c + s_c
+            personal_c = P_C * random_coefficients[0] * (particle.best_genes - particle.genes) # personal coefficient
+            social_c = S_C * random_coefficients[1] * (swarm.best_genes - particle.genes) # social coefficient
+            velocity = (W * particle.velocity) + personal_c + social_c
             velocity = np.clip(velocity, -V_MAX, V_MAX)
             particle.velocity = velocity.copy()
 
