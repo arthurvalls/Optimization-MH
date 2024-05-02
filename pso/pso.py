@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import datetime
+import time
 
 
 # Função de Rosenbrock para N dimensões
@@ -92,27 +93,32 @@ class Swarm:
 	        plt.close()
 
 
-pop_size = 20
-bounds = [-5, 5]
-dim = 2
 # hyperparameters
 P_C = S_C = 0.2
 W = 0.7
 V_MAX = 0.15
-swarm = Swarm(pop_size, bounds, dim, rosenbrock)
 
 def pso(swarm, max_iter=100):
     positions = []  # Store positions of particles
     velocities = []
-    for i in range(max_iter):
+
+    for _ in range(max_iter):
         for particle in swarm.particles:
+
+        	# update velocity
             random_coefficients = np.random.uniform(size=2)
+
             p_c = P_C * random_coefficients[0] * (particle.best_genes - particle.genes) # personal coefficient
             s_c = S_C * random_coefficients[1] * (swarm.best_genes - particle.genes) # social coefficient
             velocity = W * particle.velocity + p_c + s_c
             velocity = np.clip(velocity, -V_MAX, V_MAX)
             particle.velocity = velocity.copy()
+
+            # update genes
             particle.genes += velocity
+            particle.genes = np.clip(particle.genes, swarm.bounds[0], swarm.bounds[1])
+
+            # get fitness
             particle.fitness = swarm.cost_function(particle.genes)
 
             if particle.fitness < particle.best_fitness:
@@ -120,23 +126,27 @@ def pso(swarm, max_iter=100):
                 particle.best_genes = particle.genes.copy()
 
                 if particle.best_fitness < swarm.best_fitness:
-                    swarm.best_genes = particle.genes.copy()
                     swarm.best_fitness = particle.best_fitness
+                    swarm.best_genes = particle.genes.copy()
 
-            particle.genes = np.clip(particle.genes.copy(), swarm.bounds[0], swarm.bounds[1])
-            particle.fitness = swarm.cost_function(particle.genes)
-
-        positions.append([particle.genes for particle in swarm.particles])
-        velocities.append([particle.velocity for particle in swarm.particles])
+        positions.append([particle.genes.copy() for particle in swarm.particles])
+        velocities.append([particle.velocity.copy() for particle in swarm.particles])
 
     print(f"Best fitness: {swarm.best_fitness}")
     print(f"Best genes: {swarm.best_genes}")
     return positions, velocities
 
 
+
+pop_size = 20
+bounds = [-5, 5]
+dim = 2
+swarm = Swarm(pop_size, bounds, dim, rosenbrock)
 positions, velocities = pso(swarm)
 
-swarm.generate_gif(positions, velocities)
+
+#swarm.generate_gif(positions, velocities)
+
 print("PYMOO: ")
 from pymoo.algorithms.soo.nonconvex.pso import PSO
 from pymoo.problems.single import Rosenbrock
