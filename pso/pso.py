@@ -15,6 +15,11 @@ def ackley(X):
     return term1 + term2 + 20 + np.e
 
 
+def func(X):
+	x, y = X
+	return (x-3.14)**2 + (y-2.72)**2 + np.sin(3*x+1.41) + np.sin(4*y-1.73)
+ 
+
 class Particle:
     def __init__(self, genes):
         self.genes = genes
@@ -29,64 +34,66 @@ class Swarm:
         self.bounds = bounds
         self.particles = []
         self.best_fitness = np.inf
-        self.best_genes = None
+        self.best_genes = []
         self.cost_function = cost_function
         for _ in range(swarm_size):
-            genes = np.random.uniform(self.bounds[0], self.bounds[1], dim)
+            genes = np.random.uniform(self.bounds[0], self.bounds[1], self.dim)
             particle = Particle(genes)
+            particle.fitness = self.cost_function(particle.genes)
             self.particles.append(particle)
-            if self.best_genes is None or particle.fitness < self.best_fitness:
+            if particle.fitness < self.best_fitness:
                 self.best_genes = particle.genes.copy()
                 self.best_fitness = particle.fitness
     
     def generate_gif(self, positions, velocities):
-        def plot_generation(positions, velocities, i, ax):
-            x = np.linspace(self.bounds[0], self.bounds[1], 100)
-            y = np.linspace(self.bounds[0], self.bounds[1], 100)
-            X, Y = np.meshgrid(x, y)
-            Z = self.cost_function((X, Y))
+    	if self.dim < 3:
+	        def plot_generation(positions, velocities, i, ax):
+	            x = np.linspace(self.bounds[0], self.bounds[1], 100)
+	            y = np.linspace(self.bounds[0], self.bounds[1], 100)
+	            X, Y = np.meshgrid(x, y)
+	            Z = self.cost_function((X, Y))
 
-            current_positions = positions[i]
-            current_velocities = velocities[i]
-            x = [point[0] for point in current_positions]
-            y = [point[1] for point in current_positions]
+	            current_positions = positions[i]
+	            current_velocities = velocities[i]
+	            x = [point[0] for point in current_positions]
+	            y = [point[1] for point in current_positions]
 
-            ax.clear()
-            ax.contourf(X, Y, Z, levels=50, cmap='rainbow', alpha=0.5)
-            ax.scatter(x, y, marker="8", c="r", s=50)  # Change the size here (100 is just an example)
-
-
-            # Plot arrows
-            for pos, vel in zip(current_positions, current_velocities):
-                ax.arrow(pos[0], pos[1], vel[0], vel[1], head_width=0.1, head_length=0.1, color='black')
-
-            ax.set_xlabel('X')
-            ax.set_ylabel('Y')
-            ax.set_title('Generation {}'.format(i + 1))
-            # ax.legend()
+	            ax.clear()
+	            ax.contourf(X, Y, Z, levels=50, cmap='plasma', alpha=0.5)
+	            ax.scatter(x, y, marker="*", c="r")  # Change the size here (100 is just an example)
 
 
-        positions = positions[:60]
-        velocities = velocities[:60]
+	            # Plot arrows
+	            for pos, vel in zip(current_positions, current_velocities):
+	                ax.arrow(pos[0], pos[1], vel[0], vel[1], head_width=0.1, head_length=0.1, color='black')
 
-        fig, ax = plt.subplots(figsize=(10, 10))
-
-        def update_plot(i):
-            plot_generation(positions, velocities, i, ax)
-
-        current_date = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        gif_filename = f'images/convergence_{self.cost_function.__name__}_{current_date}.gif'
-        ani = FuncAnimation(fig, update_plot, frames=len(positions), interval=115)
-
-        ani.save(gif_filename, writer='pillow')
-
-        print(f"Gif saved at: {gif_filename}")
-
-        plt.close()
+	            ax.set_xlabel('X')
+	            ax.set_ylabel('Y')
+	            ax.set_title('Generation {}'.format(i + 1))
+	            # ax.legend()
 
 
-pop_size = 30
-bounds = [-5., 5.]
+	        positions = positions[:60]
+	        velocities = velocities[:60]
+
+	        fig, ax = plt.subplots(figsize=(10, 10))
+
+	        def update_plot(i):
+	            plot_generation(positions, velocities, i, ax)
+
+	        current_date = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+	        gif_filename = f'images/convergence_{self.cost_function.__name__}_{current_date}.gif'
+	        ani = FuncAnimation(fig, update_plot, frames=len(positions), interval=115)
+
+	        ani.save(gif_filename, writer='pillow')
+
+	        print(f"Gif saved at: {gif_filename}")
+
+	        plt.close()
+
+
+pop_size = 20
+bounds = [-5, 5]
 dim = 2
 # hyperparameters
 P_C = S_C = 0.2
@@ -129,4 +136,19 @@ def pso(swarm, max_iter=100):
 
 positions, velocities = pso(swarm)
 
-#swarm.generate_gif(positions, velocities)
+swarm.generate_gif(positions, velocities)
+print("PYMOO: ")
+from pymoo.algorithms.soo.nonconvex.pso import PSO
+from pymoo.problems.single import Rosenbrock
+from pymoo.optimize import minimize
+
+problem = Rosenbrock()
+
+algorithm = PSO()
+
+res = minimize(problem,
+               algorithm,
+               verbose=False)
+
+print(f"Best solution: {res.F}")
+print(f"Best individual: {res.X}")
