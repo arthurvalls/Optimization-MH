@@ -88,24 +88,18 @@ class Swarm:
 pop_size = 30
 bounds = [-5., 5.]
 dim = 2
-
 # hyperparameters
 P_C = S_C = 0.2
 W = 0.7
 V_MAX = 0.15
-swarm = Swarm(pop_size, bounds, dim, ackley)
-
-def update(frame):
-    scatter, = frame
-    return scatter,
-
+swarm = Swarm(pop_size, bounds, dim, rosenbrock)
 
 def pso(swarm, max_iter=100):
     positions = []  # Store positions of particles
     velocities = []
     for i in range(max_iter):
         for particle in swarm.particles:
-            random_coefficients = np.random.uniform(size=swarm.dim)
+            random_coefficients = np.random.uniform(size=2)
             p_c = P_C * random_coefficients[0] * (particle.best_genes - particle.genes) # personal coefficient
             s_c = S_C * random_coefficients[1] * (swarm.best_genes - particle.genes) # social coefficient
             velocity = W * particle.velocity + p_c + s_c
@@ -135,4 +129,4 @@ def pso(swarm, max_iter=100):
 
 positions, velocities = pso(swarm)
 
-swarm.generate_gif(positions, velocities)
+#swarm.generate_gif(positions, velocities)
