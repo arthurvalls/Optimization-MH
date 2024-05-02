@@ -65,7 +65,7 @@ class Swarm:
 
 	            # Plot arrows
 	            for pos, vel in zip(current_positions, current_velocities):
-	                ax.arrow(pos[0], pos[1], vel[0], vel[1], head_width=0.1, head_length=0.1, color='black')
+	                ax.arrow(pos[0], pos[1], vel[0], vel[1], head_width=self.bounds[1]*0.02, head_length=self.bounds[1]*0.02, color='black')
 
 	            ax.set_xlabel('X')
 	            ax.set_ylabel('Y')
