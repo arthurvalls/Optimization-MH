@@ -2,7 +2,7 @@ import numpy as np
 import pso
 from parameters import ParameterLoader
 from pymoo.algorithms.soo.nonconvex.pso import PSO
-from pymoo.problems.single import Rosenbrock
+from pymoo.problems import get_problem
 from pymoo.optimize import minimize
 
 
@@ -31,7 +31,7 @@ def main():
     # swarm.generate_gif(positions, velocities)
 
     print("\nPYMOO: ")
-    problem = Rosenbrock()
+    problem = get_problem("rosenbrock", n_var=dim)
 
     algorithm = PSO()
 
