@@ -3,6 +3,13 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import datetime
 import time
+from parameters import ParameterLoader
+import tqdm
+
+# Função de Rosenbrock para N dimensões
+def rosenbrock(X, a=1, b=100):
+    return sum(a * (X[i+1] - X[i]**2)**2 + b * (X[i] - 1)**2 for i in range(len(X)-1))
+
 
 class Particle:
     def __init__(self, genes):
@@ -86,6 +93,7 @@ class PSO:
     def pso(self, swarm, max_iter=100):
         positions = []  # Store positions of particles
         velocities = []
+        best_fitness = []
 
         for _ in range(max_iter):
             for particle in swarm.particles:
@@ -114,9 +122,58 @@ class PSO:
                         swarm.best_fitness = particle.best_fitness
                         swarm.best_genes = particle.genes.copy()
 
+            best_fitness.append(swarm.best_fitness)
+
             positions.append([particle.genes.copy() for particle in swarm.particles])
             velocities.append([particle.velocity.copy() for particle in swarm.particles])
 
         print(f"Best fitness: {swarm.best_fitness}")
         print(f"Best genes: {swarm.best_genes}")
-        return positions, velocities
+        return positions, velocities, best_fitness
+
+
+    def simulate(self, n_rounds):
+        bounds = [-2.048, 2.048]
+        dim = 2
+        pop_size = 30
+        best_costs = []  
+
+        for _ in (range(n_rounds)):
+            swarm = Swarm(pop_size, bounds, dim, rosenbrock)
+            loader = ParameterLoader(dim) # insert -1 for plot visualization params
+
+            personal_coefficient, social_coefficient, inertia_weight, max_velocity = loader.load_params()
+            optimizer = PSO(personal_coefficient, social_coefficient, inertia_weight, max_velocity)
+            all_generations, velocities, best_fitness = optimizer.pso(swarm)
+            
+            best_costs.append(best_fitness)  
+            
+
+        avg_across_rounds = np.mean(best_costs, axis=0)
+
+        best_costs_old = []
+        for _ in (range(n_rounds)):
+            swarm = Swarm(pop_size, bounds, dim, rosenbrock)
+            loader = ParameterLoader(-1) # insert -1 for plot visualization params
+
+            personal_coefficient, social_coefficient, inertia_weight, max_velocity = loader.load_params()
+            optimizer = PSO(personal_coefficient, social_coefficient, inertia_weight, max_velocity)
+            all_generations, velocities, best_fitness = optimizer.pso(swarm)
+            
+            best_costs_old.append(best_fitness)  
+            
+
+        avg_across_rounds_old = np.mean(best_costs_old, axis=0)
+        
+
+        # Plotting
+        plt.plot(avg_across_rounds, linestyle="dashed")
+        plt.plot(len(avg_across_rounds), avg_across_rounds[-1], marker='o', markersize=3, color='green', label=f'Best (Tuned): {avg_across_rounds[-1]}')
+        plt.plot(avg_across_rounds_old)
+        plt.plot(len(avg_across_rounds_old), avg_across_rounds_old[-1], marker='x', markersize=5, color='yellow', label=f'Best (Un-tuned): {avg_across_rounds_old[-1]}')
+        plt.xlabel('Generation')
+        plt.ylabel('Average Best Cost')
+        plt.title('Average Best Cost per Generation over all Rounds')
+        current_date = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        plt.legend()
+        plt.savefig(f"images/average_{swarm.cost_function.__name__}_{current_date}.png")

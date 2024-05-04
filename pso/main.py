@@ -26,21 +26,24 @@ def main():
 
     personal_coefficient, social_coefficient, inertia_weight, max_velocity = loader.load_params()
     optimizer = pso.PSO(personal_coefficient, social_coefficient, inertia_weight, max_velocity)
-    positions, velocities = optimizer.pso(swarm)
+    # positions, velocities, _ = optimizer.pso(swarm)
+
+    optimizer.simulate(30)
+
 
     # swarm.generate_gif(positions, velocities)
 
-    print("\nPYMOO: ")
-    problem = get_problem("rosenbrock", n_var=dim)
+    # print("\nPYMOO: ")
+    # problem = get_problem("rosenbrock", n_var=dim)
 
-    algorithm = PSO()
+    # algorithm = PSO()
 
-    res = minimize(problem,
-                   algorithm,
-                   verbose=False)
+    # res = minimize(problem,
+    #                algorithm,
+    #                verbose=False)
 
-    print(f"Best solution: {res.F}")
-    print(f"Best individual: {res.X}")
+    # print(f"Best solution: {res.F}")
+    # print(f"Best individual: {res.X}")
 
 if __name__ == "__main__":
     main()
