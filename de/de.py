@@ -16,32 +16,27 @@ class DifferentialEvolution:
 
     def mutate(self, population):
         mutated_population = np.zeros_like(population)
+        idxs = np.arange(self.pop_size)
         for i in range(self.pop_size):
-            idxs = list(range(self.pop_size))
-            idxs.remove(i)
-            a, b, c = np.random.choice(idxs, 3, replace=False)
+            np.random.shuffle(idxs)
+            a, b, c = idxs[:3]
             mutant = population[a] + self.F * (population[b] - population[c])
             mutated_population[i] = np.clip(mutant, self.bounds[0], self.bounds[1])
         return mutated_population
 
+
     def crossover(self, population, mutated_population):
         crossover_population = np.zeros_like(population)
-        for i in range(self.pop_size):
-            gene = np.random.randint(self.dim)
-            mask = np.random.rand(self.dim) < self.CR
-            mask[gene] = True
-            # if true herda dos mutados else herda da populacao atual
-            crossover_population[i] = np.where(mask, mutated_population[i], population[i])
+        genes = np.random.randint(self.dim, size=self.pop_size)
+        masks = np.random.rand(self.pop_size, self.dim) < self.CR
+        masks[np.arange(self.pop_size), genes] = True
+        crossover_population = np.where(masks, mutated_population, population)
         return crossover_population
 
+
     def select_population(self, population, crossover_population):
-        new_pop = np.zeros_like(population)
-        for i in range(len(population)):
-            if self.fun(population[i]) < self.fun(crossover_population[i]):
-                new_pop[i] = population[i]
-            else:
-                new_pop[i] = crossover_population[i]
-        return new_pop
+        return np.array([population[i] if self.fun(population[i]) < self.fun(crossover_population[i])
+                    else crossover_population[i] for i in range(len(population))])
 
     def optimize(self, max_iter=100):
         population = np.random.uniform(self.bounds[0], self.bounds[1], (self.pop_size, self.dim))
@@ -62,7 +57,7 @@ class Simulator:
     def plot_dims(self, dims):
         for d in dims:
             self.optimizer.dim = d
-            _, _, gens = self.optimizer.optimize(3000)
+            _, _, gens = self.optimizer.optimize(1000)
             bests = []
             for gen in gens:
                 b = min(gen, key=self.optimizer.fun)

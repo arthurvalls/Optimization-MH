@@ -13,7 +13,7 @@ def main():
 	print(f"Best cost: {best_cost}")
 	sim = Simulator(de)
 	# sim.plot_dims([8,16,32,64])
-	sim.generate_gif(generations)
+	#sim.generate_gif(generations)
 
 if __name__ == "__main__":
 	main()
