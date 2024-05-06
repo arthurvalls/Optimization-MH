@@ -16,10 +16,12 @@ class DifferentialEvolution:
 
     def mutate(self, population):
         mutated_population = np.zeros_like(population)
-        idxs = np.arange(self.pop_size)
+        idxs = list(np.arange(self.pop_size))
         for i in range(self.pop_size):
-            np.random.shuffle(idxs)
-            a, b, c = idxs[:3]
+            temp_idxs = idxs[:]
+            temp_idxs.remove(i)
+            np.random.shuffle(temp_idxs)
+            a, b, c = temp_idxs[:3]
             mutant = population[a] + self.F * (population[b] - population[c])
             mutated_population[i] = np.clip(mutant, self.bounds[0], self.bounds[1])
         return mutated_population
