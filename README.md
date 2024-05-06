@@ -3,5 +3,5 @@
 ## Assignment 1: GA
 - Task: Genetic Algorithm.
 
-## Assignment 2: PSO
-- Task: Particle Swarm Optimization
+## Assignment 2: DE
+- Task: Differential Evolution.
