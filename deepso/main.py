@@ -68,7 +68,7 @@ class Swarm:
         self.gbest_score = min(p.pbest_score for p in self.particles)
     
     def optimize(self):
-        for iteration in range(self.num_iterations):
+        for iteration in tqdm(range(self.num_iterations)):
             for particle in self.particles:
                 score = particle.update(self.gbest_position, self)
                 if score < self.gbest_score:
@@ -164,11 +164,10 @@ w,c1,c2,F,CR,v_max = [0.31419906, 1.47620838, 1.2800813,  0.36238664, 0.56160154
 
 # w,c1,c2,F,CR,v_max = [0.31419906, 1.07620838, 1.3800813,  0.36238664, 0.56160154, 0.35317888] #21 -avg +std
 
-# w,c1,c2,F,CR,v_max = [0.45203125, 0.9019769, 0.84886763, 0.83087821, 0.45429264, 1.88688463] #23
-
 dim = 30
 particles = dim
-iters = 3333
+iters = int(np.round(100_000/particles))
+
 best_vec = []
 for _ in tqdm(range(30)):
     deepso = DEEPSO(rosenbrock, dim, particles, iters, w, c1, c2, F, CR, v_max, bounds=(-2.048, 2.048))
@@ -179,3 +178,27 @@ for _ in tqdm(range(30)):
 
 print(f'avg: {np.mean(best_vec)}')
 print(f'std: {np.std(best_vec)}')
+
+# from concurrent.futures import ThreadPoolExecutor, as_completed
+# def run_deepso():
+#     deepso = DEEPSO(rosenbrock, dim, particles, iters, w, c1, c2, F, CR, v_max, bounds=(-2.048, 2.048))
+#     best_cost, best_params = deepso.run()
+#     print(f'Best parameters: {best_params}')
+#     print(f'Best cost: {best_cost}')
+#     return best_cost
+
+# best_vec = []
+
+# with ThreadPoolExecutor() as executor:
+#     futures = [executor.submit(run_deepso) for _ in range(30)]
+#     for future in tqdm(as_completed(futures), total=30):
+#         best_vec.append(future.result())
+
+# print(f'avg: {np.mean(best_vec)}')
+# print(f'std: {np.std(best_vec)}')
+
+
+deepso = DEEPSO(rosenbrock, dim, particles, iters, w, c1, c2, F, CR, v_max, bounds=(-2.048, 2.048))
+best_cost, best_params = deepso.run()
+print(f'Best parameters: {best_params}')
+print(f'Best cost: {best_cost}')
