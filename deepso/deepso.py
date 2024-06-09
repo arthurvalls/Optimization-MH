@@ -22,35 +22,31 @@ class Particle:
         self.pbest_score = self.cost_function(self.position)
         self.alpha = 0.2
 
-    def error_function(particle):
-        return abs(np.sqrt(np.pow(0 - self.cost_function(particle)), 2))
-    
-    def sigmoid(self, x):
-        return 1 / (1 + np.exp(-x))
-
-
     def update(self, gbest_position, swarm):
         
         indices = list(range(swarm.num_particles))
         indices.remove(swarm.particles.index(self))
         a, b, c = np.random.choice(indices, 3, replace=False)
-        mutant = swarm.particles[a].position + self.F * (swarm.particles[b].position - swarm.particles[c].position)
+        mutant = swarm.particles[a].position + self.F * (gbest_position - swarm.particles[c].position)
         
         mutant = np.clip(mutant, self.bounds[0], self.bounds[1])
         
         # trial vec
         self.position = np.where(np.random.uniform(size=self.num_dimensions) < self.CR, mutant, self.position) 
         
-        r1, r2 = np.random.uniform(size=2)
+        r1, r2, r3 = np.random.uniform(size=3)
         self.velocity = (self.w * self.velocity +
                              self.c1 * r1 * (self.pbest_position - self.position) +
                              self.c2 * r2 * (gbest_position - self.position) + 
-                             self.c3 * np.random.uniform() * (gbest_position - self.pbest_position)) 
+                             self.c3 * r3 * (gbest_position - self.pbest_position)) # delta weight
+        
         
         self.velocity = np.clip(self.velocity, -self.v_max, self.v_max)
         
+
         self.position = self.position + self.velocity
         self.position = np.clip(self.position, self.bounds[0], self.bounds[1])
+        
         score = self.cost_function(self.position)
 
         if score < self.pbest_score:
